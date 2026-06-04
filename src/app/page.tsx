@@ -20,7 +20,7 @@ const menuCards = [
   {
     title: "Kelola Petualangan",
     description:
-      "Tambah, edit, dan hapus paket petualangan wisata alam di Bintan.",
+      "Tambah, edit, dan hapus paket petualangan wisata alam di Tanjungpinang.",
     icon: Compass,
     href: "/adventures",
     color: "bg-emerald-50 text-emerald-600",
@@ -60,7 +60,7 @@ const menuCards = [
   {
     title: "Rekomendasi Tempat",
     description:
-      "Kurasi destinasi wisata unggulan dan tempat-tempat menarik di Bintan.",
+      "Kurasi destinasi wisata unggulan dan tempat-tempat menarik di Tanjungpinang.",
     icon: MapPin,
     href: "/places",
     color: "bg-rose-50 text-rose-600",
@@ -131,7 +131,6 @@ export default function DashboardPage() {
               <p className="text-sm font-bold text-gray-900 leading-tight">
                 XplorePinang
               </p>
-              <p className="text-xs text-gray-400 leading-tight">Admin CMS</p>
             </div>
           </div>
 
@@ -226,7 +225,7 @@ export default function DashboardPage() {
       <footer className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-4 border-t border-gray-100">
         <p className="text-xs text-center text-gray-400">
           &copy; {new Date().getFullYear()} XplorePinang Admin CMS. Dibuat untuk
-          mengelola konten pariwisata Bintan.
+          mengelola konten pariwisata Tanjungpinang.
         </p>
       </footer>
     </div>
