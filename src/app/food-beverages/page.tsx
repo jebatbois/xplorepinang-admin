@@ -69,7 +69,29 @@ export default function FoodBeveragesPage() {
   const [imagePreview, setImagePreview] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // State lokal untuk time picker jam buka & tutup
+  const [openTime, setOpenTime] = useState("");
+  const [closeTime, setCloseTime] = useState("");
+
   const isBusy = savingStep !== "idle";
+
+  // Parse "08.00 – 22.00 WIB" → { open: "08:00", close: "22:00" }
+  const parseOpeningHours = (str: string) => {
+    const match = str.match(/(\d{2})[.:](\d{2}).*?(\d{2})[.:](\d{2})/);
+    if (!match) return { open: "", close: "" };
+    return {
+      open: `${match[1]}:${match[2]}`,
+      close: `${match[3]}:${match[4]}`,
+    };
+  };
+
+  // Format dua time input → string jam operasional
+  const buildOpeningHours = (open: string, close: string) => {
+    const fmt = (t: string) => t.replace(":", ".");
+    if (open && close) return `${fmt(open)} \u2013 ${fmt(close)} WIB`;
+    if (open) return `${fmt(open)} WIB`;
+    return "";
+  };
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchItems = useCallback(async () => {
@@ -112,6 +134,8 @@ export default function FoodBeveragesPage() {
     setEditingId(null);
     setImageFile(null);
     setImagePreview("");
+    setOpenTime("");
+    setCloseTime("");
     setModalOpen(true);
   };
 
@@ -129,6 +153,10 @@ export default function FoodBeveragesPage() {
     setEditingId(item.id);
     setImageFile(null);
     setImagePreview(item.image_url ?? "");
+    // Parse jam operasional yang sudah ada ke dua time input
+    const parsed = parseOpeningHours(item.opening_hours ?? "");
+    setOpenTime(parsed.open);
+    setCloseTime(parsed.close);
     setModalOpen(true);
   };
 
@@ -141,6 +169,8 @@ export default function FoodBeveragesPage() {
     setImageFile(null);
     setImagePreview("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    setOpenTime("");
+    setCloseTime("");
   };
 
   // ── Upload ────────────────────────────────────────────────────────────────
@@ -538,23 +568,58 @@ export default function FoodBeveragesPage() {
                   />
                 </div>
 
-                {/* Jam Buka */}
+                {/* Jam Operasional — dua time picker */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Jam Operasional
                   </label>
-                  <input
-                    type="text"
-                    value={formData.opening_hours}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        opening_hours: e.target.value,
-                      })
-                    }
-                    placeholder="Contoh: 08.00 – 22.00 WIB"
-                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Buka</p>
+                      <input
+                        type="time"
+                        value={openTime}
+                        onChange={(e) => {
+                          setOpenTime(e.target.value);
+                          setFormData({
+                            ...formData,
+                            opening_hours: buildOpeningHours(
+                              e.target.value,
+                              closeTime,
+                            ),
+                          });
+                        }}
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Tutup</p>
+                      <input
+                        type="time"
+                        value={closeTime}
+                        onChange={(e) => {
+                          setCloseTime(e.target.value);
+                          setFormData({
+                            ...formData,
+                            opening_hours: buildOpeningHours(
+                              openTime,
+                              e.target.value,
+                            ),
+                          });
+                        }}
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                      />
+                    </div>
+                  </div>
+                  {/* Preview hasil format yang akan disimpan */}
+                  {formData.opening_hours && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Tersimpan sebagai:{" "}
+                      <span className="font-medium text-gray-600">
+                        {formData.opening_hours}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Upload Gambar */}
