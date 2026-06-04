@@ -15,17 +15,14 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-// Definisi setiap menu kartu CMS
-const menuCards = [
+const menuItems = [
   {
     title: "Kelola Petualangan",
     description:
       "Tambah, edit, dan hapus paket petualangan wisata alam di Tanjungpinang.",
     icon: Compass,
     href: "/adventures",
-    color: "bg-emerald-50 text-emerald-600",
-    border: "border-emerald-100",
-    badge: "Adventures",
+    tag: "Adventures",
   },
   {
     title: "Cerita Pinang (Blog)",
@@ -33,9 +30,7 @@ const menuCards = [
       "Kelola artikel, cerita perjalanan, dan konten editorial pariwisata.",
     icon: BookOpen,
     href: "/blogs",
-    color: "bg-blue-50 text-blue-600",
-    border: "border-blue-100",
-    badge: "Blog Posts",
+    tag: "Blog Posts",
   },
   {
     title: "Direktori Kuliner",
@@ -43,9 +38,7 @@ const menuCards = [
       "Manajemen data restoran, kafe, dan kuliner khas yang wajib dikunjungi.",
     icon: UtensilsCrossed,
     href: "/food-beverages",
-    color: "bg-orange-50 text-orange-600",
-    border: "border-orange-100",
-    badge: "Food & Beverages",
+    tag: "Food & Beverages",
   },
   {
     title: "Agenda Event",
@@ -53,9 +46,7 @@ const menuCards = [
       "Publikasikan festival, pameran, dan acara wisata yang akan datang.",
     icon: CalendarDays,
     href: "/events",
-    color: "bg-purple-50 text-purple-600",
-    border: "border-purple-100",
-    badge: "Events",
+    tag: "Events",
   },
   {
     title: "Rekomendasi Tempat",
@@ -63,25 +54,20 @@ const menuCards = [
       "Kurasi destinasi wisata unggulan dan tempat-tempat menarik di Tanjungpinang.",
     icon: MapPin,
     href: "/places",
-    color: "bg-rose-50 text-rose-600",
-    border: "border-rose-100",
-    badge: "Places",
+    tag: "Places",
   },
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
-  // Gunakan state untuk menghindari hydration mismatch (localStorage hanya ada di client)
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Pengecekan autentikasi di sisi client
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
-    // Jadikan callback terpisah agar tidak dianggap setState synchronous langsung
     const timer = setTimeout(() => setIsReady(true), 0);
     return () => clearTimeout(timer);
   }, [router]);
@@ -91,12 +77,11 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
-  // Tampilkan loading sementara pengecekan auth berjalan
   if (!isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-3 text-gray-400">
-          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
             <circle
               className="opacity-25"
               cx="12"
@@ -111,121 +96,97 @@ export default function DashboardPage() {
               d="M4 12a8 8 0 018-8v8H4z"
             />
           </svg>
-          <span className="text-sm">Memuat dashboard...</span>
+          <span className="text-sm">Memuat...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* ── Header ── */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo & nama */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-green-600">
-              <Leaf className="w-5 h-5 text-white" />
+      <header className="border-b border-gray-200 sticky top-0 z-10 bg-white">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-green-600">
+              <Leaf className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">
-                XplorePinang
-              </p>
-            </div>
+            <span className="text-sm font-bold text-gray-900">
+              XplorePinang
+            </span>
+            <span className="text-gray-200 select-none">·</span>
+            <span className="text-sm text-gray-400">Admin CMS</span>
           </div>
 
-          {/* Tombol Logout */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors duration-150 cursor-pointer"
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span>Keluar</span>
           </button>
         </div>
       </header>
 
-      {/* ── Main Content ── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Greeting section */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-1">
-            <LayoutDashboard className="w-5 h-5 text-green-600" />
-            <span className="text-sm font-medium text-green-600 uppercase tracking-wide">
-              Dashboard
+      {/* ── Main ── */}
+      <main className="max-w-4xl mx-auto px-6 lg:px-8 py-12 w-full flex-1">
+        {/* Page title */}
+        <div className="mb-10 pb-8 border-b border-gray-100">
+          <div className="flex items-center gap-2 mb-3">
+            <LayoutDashboard className="w-4 h-4 text-green-600" />
+            <span className="text-xs font-semibold text-green-600 uppercase tracking-widest">
+              Manajemen Konten
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Selamat Datang, Admin! 👋
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+            Selamat Datang, Admin.
           </h1>
-          <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
-            Pilih menu di bawah untuk mengelola konten pariwisata XplorePinang.
+          <p className="text-sm text-gray-400">
+            {menuItems.length} modul tersedia — pilih untuk mulai mengelola
+            konten.
           </p>
         </div>
 
-        {/* Stats bar singkat */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
-          {menuCards.map((card) => {
-            const Icon = card.icon;
+        {/* ── Menu — flat list dengan border-b ── */}
+        <nav aria-label="Menu utama CMS">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
             return (
-              <div
-                key={card.badge}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-3 ${card.color} ${card.border}`}
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex items-center gap-5 py-5 border-b border-gray-100 hover:border-gray-200 transition-colors"
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="text-xs font-semibold truncate">
-                  {card.badge}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                {/* Icon */}
+                <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-md bg-gray-100 group-hover:bg-green-600 transition-colors">
+                  <Icon className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                </div>
 
-        {/* Grid kartu menu utama */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {menuCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div
-                key={card.title}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col"
-              >
-                {/* Card body */}
-                <div className="p-6 flex-1">
-                  <div
-                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 ${card.color}`}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-base font-semibold text-gray-900 mb-1.5">
-                    {card.title}
-                  </h2>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    {card.description}
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-green-700 transition-colors">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">
+                    {item.description}
                   </p>
                 </div>
 
-                {/* Card footer — tombol aksi */}
-                <div className="px-6 pb-6">
-                  <Link
-                    href={card.href}
-                    className="flex items-center justify-between w-full bg-gray-50 group-hover:bg-green-600 group-hover:text-white text-gray-600 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors duration-200"
-                  >
-                    <span>Kelola Data</span>
-                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
+                {/* Tag + arrow */}
+                <div className="shrink-0 flex items-center gap-2.5 text-gray-300 group-hover:text-green-600 transition-colors">
+                  <span className="text-xs hidden sm:block">{item.tag}</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </div>
-              </div>
+              </Link>
             );
           })}
-        </div>
+        </nav>
       </main>
 
       {/* ── Footer ── */}
-      <footer className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-4 border-t border-gray-100">
-        <p className="text-xs text-center text-gray-400">
-          &copy; {new Date().getFullYear()} XplorePinang Admin CMS. Dibuat untuk
-          mengelola konten pariwisata Tanjungpinang.
+      <footer className="border-t border-gray-100 max-w-4xl mx-auto w-full px-6 lg:px-8 py-5">
+        <p className="text-xs text-gray-400">
+          &copy; {new Date().getFullYear()} XplorePinang Admin CMS
         </p>
       </footer>
     </div>

@@ -185,12 +185,10 @@ export default function BlogsPage() {
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("blog_posts")
-          .insert({
-            ...payload,
-            published_at: new Date().toISOString().split("T")[0],
-          });
+        const { error } = await supabase.from("blog_posts").insert({
+          ...payload,
+          published_at: new Date().toISOString().split("T")[0],
+        });
         if (error) throw error;
       }
       closeModal();
@@ -315,7 +313,7 @@ export default function BlogsPage() {
         )}
 
         {/* Tabel */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center gap-3 py-24 text-gray-400">
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -437,7 +435,7 @@ export default function BlogsPage() {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-xl w-full max-w-lg flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
               <div className="flex items-center gap-3">
@@ -625,7 +623,7 @@ export default function BlogsPage() {
               </div>
 
               {/* Footer */}
-              <div className="shrink-0 px-6 py-4 bg-gray-50 rounded-b-2xl flex items-center justify-end gap-3 border-t border-gray-100">
+              <div className="shrink-0 px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-end gap-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={closeModal}
