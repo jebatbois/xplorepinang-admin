@@ -26,7 +26,7 @@ export default function LoginPage() {
 
     if (username === VALID_USERNAME && password === VALID_PASSWORD) {
       localStorage.setItem("isAuthenticated", "true");
-      router.push("/");
+      router.push("/dashboard");
     } else {
       setError("Username atau password salah. Silakan coba lagi.");
       setIsLoading(false);
