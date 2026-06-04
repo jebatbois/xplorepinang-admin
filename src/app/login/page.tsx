@@ -1,153 +1,120 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Leaf, AlertCircle, LogIn, Loader2 } from "lucide-react";
-
-// Kredensial hardcode untuk autentikasi sederhana
-const VALID_USERNAME = "admin";
-const VALID_PASSWORD = "xplorepinang2026";
+import { Lock, User } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulasi delay kecil agar terasa natural
-    await new Promise((res) => setTimeout(res, 600));
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      localStorage.setItem("isAuthenticated", "true");
-      router.push("/dashboard");
-    } else {
-      setError("Username atau password salah. Silakan coba lagi.");
+      const data = await res.json();
+
+      if (res.ok) {
+              localStorage.setItem("isAuthenticated", "true");
+              // Gunakan window.location.href untuk memaksa browser memuat ulang halaman
+              // dan memastikan localStorage terbaca dengan sempurna di halaman tujuan
+              window.location.href = "/dashboard"; 
+            } else {
+        setError(data.message || "Login gagal, periksa kembali kredensial Anda.");
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan koneksi ke server.");
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Top bar — branding */}
-      <div className="border-b border-gray-100 px-8 py-4 flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-green-600">
-          <Leaf className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4 font-sans">
+      <div className="w-full max-w-sm">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
+            XplorePinang
+          </h1>
+          <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">
+            Dashboard Administrasi
+          </p>
         </div>
-        <span className="text-sm font-bold text-gray-900">XplorePinang</span>
-        <span className="text-gray-300">·</span>
-        <span className="text-sm text-gray-400">Admin CMS</span>
-      </div>
 
-      {/* Form area */}
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              Masuk ke Dashboard
-            </h1>
-            <p className="text-sm text-gray-400">
-              Gunakan kredensial admin untuk melanjutkan.
-            </p>
-          </div>
-
-          {/* Error alert */}
+        <form onSubmit={handleLogin} className="space-y-6">
           {error && (
-            <div className="flex items-center gap-2 border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-6">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+            <div className="p-3 bg-red-50 border-l-2 border-red-600 text-red-700 text-sm">
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Field Username */}
+          <div className="space-y-5">
             <div>
               <label
+                className="block text-sm font-medium text-gray-700 mb-1.5"
                 htmlFor="username"
-                className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2"
               >
                 Username
               </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
-                required
-                className="w-full px-0 py-2 border-b border-gray-200 bg-transparent text-gray-900 text-sm placeholder-gray-300 focus:outline-none focus:border-green-600 transition-colors"
-              />
-            </div>
-
-            {/* Field Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2"
-              >
-                Password
-              </label>
-              <div className="relative border-b border-gray-200 focus-within:border-green-600 transition-colors">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-gray-400" />
+                </div>
                 <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  id="username"
+                  type="text"
                   required
-                  className="w-full px-0 py-2 pr-8 bg-transparent text-gray-900 text-sm placeholder-gray-300 focus:outline-none"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700 sm:text-sm transition-colors rounded-none"
+                  placeholder="Masukkan username"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
               </div>
             </div>
 
-            {/* Tombol Submit */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 text-sm transition-colors cursor-pointer"
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+                htmlFor="password"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Memverifikasi...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-4 h-4" />
-                    Masuk
-                  </>
-                )}
-              </button>
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700 sm:text-sm transition-colors rounded-none"
+                  placeholder="Masukkan password"
+                />
+              </div>
             </div>
-          </form>
-        </div>
-      </div>
+          </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-gray-100 px-8 py-4">
-        <p className="text-xs text-gray-400 text-center">
-          &copy; {new Date().getFullYear()} XplorePinang. All rights reserved.
-        </p>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-none"
+          >
+            {isLoading ? "Memverifikasi..." : "Masuk ke Dashboard"}
+          </button>
+        </form>
       </div>
     </div>
   );
