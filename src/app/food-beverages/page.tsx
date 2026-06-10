@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
+
+const MapPicker = dynamic(() => import("../../../components/MapPicker"), { ssr: false });
 import {
   Plus,
   Pencil,
@@ -28,6 +31,8 @@ type FoodBeverage = {
   rating: number;
   opening_hours: string;
   image_url: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type FormData = {
@@ -37,6 +42,8 @@ type FormData = {
   rating: number;
   opening_hours: string;
   image_url: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 const CATEGORIES = ["Restoran", "Kafe", "Warung", "Street Food", "Dessert"];
@@ -48,6 +55,8 @@ const EMPTY_FORM: FormData = {
   rating: 4.0,
   opening_hours: "",
   image_url: "",
+  latitude: null,
+  longitude: null,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -72,6 +81,9 @@ export default function FoodBeveragesPage() {
   // State lokal untuk time picker jam buka & tutup
   const [openTime, setOpenTime] = useState("");
   const [closeTime, setCloseTime] = useState("");
+
+  // State untuk map position
+  const [mapPosition, setMapPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   const isBusy = savingStep !== "idle";
 
@@ -136,6 +148,7 @@ export default function FoodBeveragesPage() {
     setImagePreview("");
     setOpenTime("");
     setCloseTime("");
+    setMapPosition(null);
     setModalOpen(true);
   };
 
@@ -147,6 +160,8 @@ export default function FoodBeveragesPage() {
       rating: item.rating,
       opening_hours: item.opening_hours,
       image_url: item.image_url,
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
     setFormError("");
     setIsEditing(true);
@@ -157,6 +172,12 @@ export default function FoodBeveragesPage() {
     const parsed = parseOpeningHours(item.opening_hours ?? "");
     setOpenTime(parsed.open);
     setCloseTime(parsed.close);
+    // Set map position dari koordinat yang sudah ada
+    if (item.latitude && item.longitude) {
+      setMapPosition({ lat: item.latitude, lng: item.longitude });
+    } else {
+      setMapPosition(null);
+    }
     setModalOpen(true);
   };
 
@@ -171,6 +192,7 @@ export default function FoodBeveragesPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
     setOpenTime("");
     setCloseTime("");
+    setMapPosition(null);
   };
 
   // ── Upload ────────────────────────────────────────────────────────────────
@@ -200,7 +222,7 @@ export default function FoodBeveragesPage() {
         finalImageUrl = await uploadImage(imageFile);
       }
       setSavingStep("saving");
-      const payload = {
+      const payload: any = {
         name: formData.name.trim(),
         category: formData.category,
         description: formData.description.trim(),
@@ -208,6 +230,10 @@ export default function FoodBeveragesPage() {
         opening_hours: formData.opening_hours.trim(),
         image_url: finalImageUrl,
       };
+      if (mapPosition) {
+        payload.latitude = mapPosition.lat;
+        payload.longitude = mapPosition.lng;
+      }
       if (isEditing && editingId) {
         const { error } = await supabase
           .from("food_beverages")
@@ -620,6 +646,40 @@ export default function FoodBeveragesPage() {
                       </span>
                     </p>
                   )}
+                </div>
+
+                {/* Peta Lokasi */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Peta Lokasi
+                  </label>
+                  <MapPicker position={mapPosition} setPosition={setMapPosition} />
+                  
+                  {/* Latitude & Longitude Display */}
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Latitude</p>
+                      <input
+                        type="text"
+                        value={mapPosition?.lat?.toFixed(6) ?? ""}
+                        readOnly
+                        disabled
+                        placeholder="—"
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-100 text-gray-600 focus:outline-none transition cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Longitude</p>
+                      <input
+                        type="text"
+                        value={mapPosition?.lng?.toFixed(6) ?? ""}
+                        readOnly
+                        disabled
+                        placeholder="—"
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-100 text-gray-600 focus:outline-none transition cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Upload Gambar */}

@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
+
+const MapPicker = dynamic(() => import("../../../components/MapPicker"), { ssr: false });
 import {
   Plus,
   Pencil,
@@ -22,17 +25,35 @@ import {
 type Place = {
   id: string;
   name: string;
+  category?: string | null;
   location_name: string;
+  description?: string | null;
   image_url: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type FormData = {
   name: string;
+  category?: string | null;
   location_name: string;
+  description?: string | null;
   image_url: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
-const EMPTY_FORM: FormData = { name: "", location_name: "", image_url: "" };
+const CATEGORIES = [
+  "Wisata Sejarah",
+  "Wisata Religi",
+  "Wisata Alam",
+  "Monumen & Landmark",
+  "Restoran & Cafe",
+  "Ruang Publik",
+  "Pusat Belanja",
+];
+
+const EMPTY_FORM: FormData = { name: "", category: "", location_name: "", description: "", image_url: "", latitude: null, longitude: null };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function PlacesPage() {
@@ -52,6 +73,7 @@ export default function PlacesPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mapPosition, setMapPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   const isBusy = savingStep !== "idle";
 
@@ -96,20 +118,30 @@ export default function PlacesPage() {
     setEditingId(null);
     setImageFile(null);
     setImagePreview("");
+    setMapPosition(null);
     setModalOpen(true);
   };
 
   const openEditModal = (item: Place) => {
     setFormData({
       name: item.name,
+      category: item.category,
       location_name: item.location_name,
+      description: item.description,
       image_url: item.image_url,
+      latitude: item.latitude,
+      longitude: item.longitude,
     });
     setFormError("");
     setIsEditing(true);
     setEditingId(item.id);
     setImageFile(null);
     setImagePreview(item.image_url ?? "");
+    if (item.latitude && item.longitude) {
+      setMapPosition({ lat: item.latitude, lng: item.longitude });
+    } else {
+      setMapPosition(null);
+    }
     setModalOpen(true);
   };
 
@@ -122,6 +154,7 @@ export default function PlacesPage() {
     setImageFile(null);
     setImagePreview("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    setMapPosition(null);
   };
 
   // ── Upload ────────────────────────────────────────────────────────────────
@@ -151,11 +184,17 @@ export default function PlacesPage() {
         finalImageUrl = await uploadImage(imageFile);
       }
       setSavingStep("saving");
-      const payload = {
+      const payload: any = {
         name: formData.name.trim(),
+        category: formData.category || null,
         location_name: formData.location_name.trim(),
+        description: formData.description?.trim() || null,
         image_url: finalImageUrl,
       };
+      if (mapPosition) {
+        payload.latitude = mapPosition.lat;
+        payload.longitude = mapPosition.lng;
+      }
       if (isEditing && editingId) {
         const { error } = await supabase
           .from("places")
@@ -317,8 +356,14 @@ export default function PlacesPage() {
                     <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Nama Tempat
                     </th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                      Kategori
+                    </th>
                     <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Lokasi
+                    </th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                      Deskripsi
                     </th>
                     <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                       Aksi
@@ -351,15 +396,25 @@ export default function PlacesPage() {
                         <p className="font-semibold text-gray-900 line-clamp-1">
                           {item.name}
                         </p>
-                        <p className="text-gray-400 text-xs mt-0.5 md:hidden">
-                          {item.location_name || "—"}
+                        <p className="text-gray-400 text-xs mt-0.5 sm:hidden">
+                          {item.category || "—"}
                         </p>
+                      </td>
+                      <td className="px-5 py-4 hidden sm:table-cell">
+                        <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                          {item.category || "—"}
+                        </span>
                       </td>
                       <td className="px-5 py-4 hidden md:table-cell">
                         <span className="flex items-center gap-1.5 text-gray-500 text-sm">
                           <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                           {item.location_name || "—"}
                         </span>
+                      </td>
+                      <td className="px-5 py-4 hidden lg:table-cell">
+                        <p className="text-gray-600 text-sm line-clamp-2 max-w-xs">
+                          {item.description || "—"}
+                        </p>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -445,6 +500,27 @@ export default function PlacesPage() {
                   />
                 </div>
 
+                {/* Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Kategori
+                  </label>
+                  <select
+                    value={formData.category || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                  >
+                    <option value="">Pilih Kategori</option>
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Lokasi */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -462,6 +538,59 @@ export default function PlacesPage() {
                     placeholder="Contoh: Kecamatan Gunung Kijang, Bintan"
                     className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   />
+                </div>
+
+                {/* Deskripsi */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Deskripsi
+                  </label>
+                  <textarea
+                    value={formData.description || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="Ceritakan tentang tempat ini..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition resize-none"
+                  />
+                </div>
+
+                {/* Peta Lokasi */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Peta Lokasi
+                  </label>
+                  <MapPicker position={mapPosition} setPosition={setMapPosition} />
+                  
+                  {/* Latitude & Longitude Display */}
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Latitude</p>
+                      <input
+                        type="text"
+                        value={mapPosition?.lat?.toFixed(6) ?? ""}
+                        readOnly
+                        disabled
+                        placeholder="—"
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-100 text-gray-600 focus:outline-none transition cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1.5">Longitude</p>
+                      <input
+                        type="text"
+                        value={mapPosition?.lng?.toFixed(6) ?? ""}
+                        readOnly
+                        disabled
+                        placeholder="—"
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-100 text-gray-600 focus:outline-none transition cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Upload Gambar */}
